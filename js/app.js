@@ -9,6 +9,12 @@ $(document).ready(function() {
       var img = document.createElement("img");
       img.className = "original img-polaroid";
       var reader = new FileReader();
+      var extension = e.originalEvent.srcElement.files[0].name.split('.').pop().toLowerCase();  //file extension from input file
+      var fileTypes = ['jpg', 'jpeg', 'png', 'gif'];  //acceptable file types
+      if (fileTypes.indexOf(extension) < 0) {
+        console.error('chose an invalid image type', extension);
+        return false;
+      }
       reader.onloadend = cbReader;
       reader.readAsDataURL(file);
       $(".org").html(img);
@@ -27,60 +33,40 @@ $(document).ready(function() {
     canvas[0].width = img[0].width;
     canvas[0].height = img[0].height;
     context.drawImage( img[0] , destX, destY, img[0].width, img[0].height);
-    grayScale(context, canvas[0], $(this).data('depth') );
+    addLogo(context, img[0], $(this).data('image'), $(this).data('scale'));
   });
 });
 
-function changeColor (pixels, i , section ) {
-  switch (section) {
-  case 0:
-    pixels[i] = pixels[i];
-    pixels[i + 1] = 0;
-    pixels[i + 2] = 0;
-    break;
-  case 1:
-    pixels[i] = pixels[i] <= 200 ? pixels[i] + 55 : pixels[i];
-    pixels[i + 1] = pixels[i + 1] <= 100 ? pixels[i + 1] + 55 : 140;
-    pixels[i + 2] = 0;
-    break;
-  case 2:
-    pixels[i] = pixels[i] <= 200 ? pixels[i] + 55 : pixels[i];
-    pixels[i + 1] = pixels[i + 1] <= 190 ? pixels[i + 1] + 55 : pixels[i + 1];
-    pixels[i + 2] = 0;
-    break;
-  case 3:
-    pixels[i] = 0;
-    pixels[i + 1] = pixels[i + 1] ;
-    pixels[i + 2] =  0;
-    break;
-  case 4:
-    pixels[i] = 0;
-    pixels[i + 1] = 0;
-    pixels[i + 2] = pixels[i + 2];
-    break;
-  case 5:
-    pixels[i] = pixels[i] - 40;
-    pixels[i + 1] = 0;
-    pixels[i + 2] = pixels[i + 2] - 20;
-    break;
-  }
-  return pixels;
-}
-
-function grayScale(context, canvas, depth) {
-    var imgData = context.getImageData(0, 0, canvas.width, canvas.height);
-    var pixels  = imgData.data;
-    ConversionFactor = 255 / (Math.pow(2,depth) - 1);
-    for (var i = 0, n = pixels.length; i < n; i += 4) {
-        var grayscale = pixels[i] * .3 + pixels[i+1] * .59 + pixels[i+2] * .11;
-        grayscale = parseInt((grayscale / ConversionFactor) + 0.5) * ConversionFactor
-        //not necesarily sure still how this works
-        pixels[i  ] = grayscale;        // red
-        pixels[i+1] = grayscale;        // green
-        pixels[i+2] = grayscale;        // blue
+var addLogo = function addLogo (context, img, image, scale) {
+  var padding = 10;
+  image = "./images/" + image;
+  base_image = new Image();
+  base_image.src = image;
+  base_image.onload = function(){
+    var max_width, max_height, offset_x, offset_y, ratio, dx, dy, dWidth, dHeight;
+    ratio = 1;
+    max_width = img.width;
+    max_height = img.height;
+    // defaults, bottom left corner at max width of the logo, with a padding of 10
+    dx = (max_width - base_image.width) - padding;
+    dy = (max_height - base_image.height) - padding;
+    dWidth = base_image.width;
+    dHeight = base_image.height;
+    if (max_width < (base_image.width + (padding * 2))) {
+      dWidth = max_width - (padding * 2);
+      ratio = (base_image.width / dWidth) > 0 ? (base_image.width / dWidth) : 100;
+      dHeight = (base_image.height / ratio) > 0 ? (base_image.height / ratio) : 100;
+      dx = (max_width - dWidth) - padding;
+      dy = (max_height - dHeight) - padding;
     }
-    //redraw the image in black & white
-    context.putImageData(imgData, 0, 0);
-}
-
+    if (scale) {
+      dWidth = dWidth * scale;
+      dHeight = dHeight * scale;
+      dx = (max_width - dWidth) - padding;
+      dy = (max_height - dHeight) - padding;
+    }
+    console.info('max widht', max_width, 'original width', base_image.width, 'new width', dWidth, 'original height', base_image.height);
+    context.drawImage(base_image, dx, dy, dWidth, dHeight);
+  };
+};
 
