@@ -5,11 +5,12 @@ $(document).ready(function() {
       img.src = reader.result;
     };
     for (var i = 0; i < e.originalEvent.srcElement.files.length; i++) {
+      console.info('loaded image');
       var file = e.originalEvent.srcElement.files[i];
       var img = document.createElement("img");
       img.className = "original img-polaroid";
       var reader = new FileReader();
-      var extension = e.originalEvent.srcElement.files[0].name.split('.').pop().toLowerCase();  //file extension from input file
+      var extension = e.originalEvent.srcElement.files[i].name.split('.').pop().toLowerCase();  //file extension from input file
       var fileTypes = ['jpg', 'jpeg', 'png', 'gif'];  //acceptable file types
       if (fileTypes.indexOf(extension) < 0) {
         console.error('chose an invalid image type', extension);
